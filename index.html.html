@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>精準音檔移調工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin: 20px 0;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-input-label {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: transform 0.3s ease;
+        }
+
+        .file-input-label:hover {
+            transform: translateY(-2px);
+        }
+
+        .controls-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #495057;
+            font-size: 1.1em;
+        }
+
+        .pitch-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .pitch-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .pitch-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .slider-container {
+            position: relative;
+            margin: 15px 0;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #e9ecef;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        .preset-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .preset-btn {
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+
+        .preset-btn:hover, .preset-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .action-buttons {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .audio-player {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .audio-player h3 {
+            margin-bottom: 15px;
+            color: #495057;
+        }
+
+        .audio-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .audio-controls button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .play-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .stop-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        .download-btn {
+            background: #007bff;
+            color: white;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .frequency-display {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1.1em;
+            text-align: center;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 精準音檔移調工具</h1>
+            <p>上傳音檔，精確調整音高和速度</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="upload-section">
+                <div class="file-input-wrapper">
+                    <input type="file" id="audioFile" class="file-input" accept="audio/*">
+                    <label for="audioFile" class="file-input-label">
+                        📁 選擇音檔
+                    </label>
+                </div>
+            </div>
+
+            <div id="status"></div>
+
+            <div class="controls-section" id="controlsSection" style="display: none;">
+                <h2 style="text-align: center; margin-bottom: 30px; color: #495057;">移調控制</h2>
+                
+                <div class="pitch-controls">
+                    <div class="control-group">
+                        <label class="control-label">半音調整</label>
+                        <input type="number" id="semitones" class="pitch-input" value="0" min="-24" max="24" step="1">
+                        <div class="slider-container">
+                            <input type="range" id="semitonesSlider" class="slider" min="-24" max="24" value="0" step="1">
+                            <div class="slider-labels">
+                                <span>-24</span>
+                                <span>0</span>
+                                <span>+24</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">音分調整 (精確)</label>
+                        <input type="number" id="cents" class="pitch-input" value="0" min="-100" max="100" step="1">
+                        <div class="slider-container">
+                            <input type="range" id="centsSlider" class="slider" min="-100" max="100" value="0" step="1">
+                            <div class="slider-labels">
+                                <span>-100¢</span>
+                                <span>0¢</span>
+                                <span>+100¢</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">速度調整</label>
+                    <input type="number" id="tempo" class="pitch-input" value="100" min="50" max="200" step="1">
+                    <div class="slider-container">
+                        <input type="range" id="tempoSlider" class="slider" min="50" max="200" value="100" step="1">
+                        <div class="slider-labels">
+                            <span>50%</span>
+                            <span>100%</span>
+                            <span>200%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="preset-buttons">
+                    <button class="preset-btn" data-semitones="0" data-cents="0">原調</button>
+                    <button class="preset-btn" data-semitones="2" data-cents="0">+2 半音</button>
+                    <button class="preset-btn" data-semitones="-2" data-cents="0">-2 半音</button>
+                    <button class="preset-btn" data-semitones="7" data-cents="0">+7 半音 (五度)</button>
+                    <button class="preset-btn" data-semitones="-7" data-cents="0">-7 半音 (五度)</button>
+                    <button class="preset-btn" data-semitones="12" data-cents="0">+12 半音 (八度)</button>
+                    <button class="preset-btn" data-semitones="-12" data-cents="0">-12 半音 (八度)</button>
+                </div>
+
+                <div class="frequency-display">
+                    頻率倍數: <span id="frequencyRatio">1.000</span> | 
+                    音高變化: <span id="pitchChange">+0 半音 +0 音分</span>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="processBtn" class="btn btn-primary">
+                        🎼 處理音檔
+                    </button>
+                    <button id="resetBtn" class="btn btn-warning">
+                        🔄 重置
+                    </button>
+                </div>
+            </div>
+
+            <div class="audio-player" id="audioPlayer" style="display: none;">
+                <h3>原始音檔</h3>
+                <audio id="originalAudio" controls style="width: 100%; margin: 10px 0;"></audio>
+                
+                <h3>移調後音檔</h3>
+                <audio id="processedAudio" controls style="width: 100%; margin: 10px 0;"></audio>
+                
+                <div class="audio-controls">
+                    <button id="downloadBtn" class="btn download-btn">
+                        💾 下載處理後音檔
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class PitchShifter {
+            constructor() {
+                this.audioContext = null;
+                this.originalBuffer = null;
+                this.processedBuffer = null;
+                this.initializeElements();
+                this.setupEventListeners();
+            }
+
+            initializeElements() {
+                this.fileInput = document.getElementById('audioFile');
+                this.semitonesInput = document.getElementById('semitones');
+                this.semitonesSlider = document.getElementById('semitonesSlider');
+                this.centsInput = document.getElementById('cents');
+                this.centsSlider = document.getElementById('centsSlider');
+                this.tempoInput = document.getElementById('tempo');
+                this.tempoSlider = document.getElementById('tempoSlider');
+                this.processBtn = document.getElementById('processBtn');
+                this.resetBtn = document.getElementById('resetBtn');
+                this.downloadBtn = document.getElementById('downloadBtn');
+                this.status = document.getElementById('status');
+                this.controlsSection = document.getElementById('controlsSection');
+                this.audioPlayer = document.getElementById('audioPlayer');
+                this.originalAudio = document.getElementById('originalAudio');
+                this.processedAudio = document.getElementById('processedAudio');
+                this.frequencyRatio = document.getElementById('frequencyRatio');
+                this.pitchChange = document.getElementById('pitchChange');
+            }
+
+            setupEventListeners() {
+                this.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+                this.semitonesInput.addEventListener('input', () => this.updateFromSemitones());
+                this.semitonesSlider.addEventListener('input', () => this.updateFromSemitones());
+                this.centsInput.addEventListener('input', () => this.updateFromCents());
+                this.centsSlider.addEventListener('input', () => this.updateFromCents());
+                this.tempoInput.addEventListener('input', () => this.updateFromTempo());
+                this.tempoSlider.addEventListener('input', () => this.updateFromTempo());
+                this.processBtn.addEventListener('click', () => this.processAudio());
+                this.resetBtn.addEventListener('click', () => this.reset());
+                this.downloadBtn.addEventListener('click', () => this.downloadProcessed());
+
+                // 預設按鈕
+                document.querySelectorAll('.preset-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => this.applyPreset(e));
+                });
+            }
+
+            handleFileSelect(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    this.showStatus('檔案已選擇: ' + file.name, 'success');
+                    this.controlsSection.style.display = 'block';
+                    this.loadAudioFile(file);
+                }
+            }
+
+            async loadAudioFile(file) {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const arrayBuffer = await file.arrayBuffer();
+                    this.originalBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+                    
+                    // 創建原始音檔的URL
+                    const originalBlob = new Blob([arrayBuffer], { type: file.type });
+                    this.originalAudio.src = URL.createObjectURL(originalBlob);
+                    
+                    this.showStatus('音檔載入完成！', 'success');
+                } catch (error) {
+                    this.showStatus('載入失敗: ' + error.message, 'error');
+                }
+            }
+
+            updateFromSemitones() {
+                const semitones = parseInt(this.semitonesInput.value);
+                this.semitonesSlider.value = semitones;
+                this.updateDisplay();
+            }
+
+            updateFromCents() {
+                const cents = parseInt(this.centsInput.value);
+                this.centsSlider.value = cents;
+                this.updateDisplay();
+            }
+
+            updateFromTempo() {
+                const tempo = parseInt(this.tempoInput.value);
+                this.tempoSlider.value = tempo;
+            }
+
+            updateDisplay() {
+                const semitones = parseInt(this.semitonesInput.value);
+                const cents = parseInt(this.centsInput.value);
+                
+                // 計算頻率倍數
+                const frequencyRatio = Math.pow(2, (semitones + cents / 100) / 12);
+                this.frequencyRatio.textContent = frequencyRatio.toFixed(3);
+                
+                // 更新音高變化顯示
+                const semitoneText = semitones >= 0 ? `+${semitones}` : semitones.toString();
+                const centText = cents >= 0 ? `+${cents}` : cents.toString();
+                this.pitchChange.textContent = `${semitoneText} 半音 ${centText} 音分`;
+            }
+
+            applyPreset(event) {
+                const btn = event.target;
+                const semitones = parseInt(btn.dataset.semitones);
+                const cents = parseInt(btn.dataset.cents);
+                
+                this.semitonesInput.value = semitones;
+                this.semitonesSlider.value = semitones;
+                this.centsInput.value = cents;
+                this.centsSlider.value = cents;
+                
+                // 更新按鈕狀態
+                document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                this.updateDisplay();
+            }
+
+            async processAudio() {
+                if (!this.originalBuffer) {
+                    this.showStatus('請先選擇音檔', 'error');
+                    return;
+                }
+
+                this.showStatus('正在處理音檔...', 'info');
+                this.processBtn.disabled = true;
+
+                try {
+                    const semitones = parseInt(this.semitonesInput.value);
+                    const cents = parseInt(this.centsInput.value);
+                    const tempo = parseInt(this.tempoInput.value);
+                    
+                    // 計算頻率倍數
+                    const frequencyRatio = Math.pow(2, (semitones + cents / 100) / 12);
+                    const tempoRatio = tempo / 100;
+                    
+                    // 使用更精確的移調算法
+                    this.processedBuffer = await this.pitchShift(this.originalBuffer, frequencyRatio, tempoRatio);
+                    
+                    // 創建處理後音檔的URL
+                    const processedArrayBuffer = this.bufferToWav(this.processedBuffer);
+                    const processedBlob = new Blob([processedArrayBuffer], { type: 'audio/wav' });
+                    this.processedAudio.src = URL.createObjectURL(processedBlob);
+                    
+                    this.audioPlayer.style.display = 'block';
+                    this.showStatus('處理完成！', 'success');
+                    
+                } catch (error) {
+                    this.showStatus('處理失敗: ' + error.message, 'error');
+                } finally {
+                    this.processBtn.disabled = false;
+                }
+            }
+
+            async pitchShift(buffer, frequencyRatio, tempoRatio) {
+                const sampleRate = buffer.sampleRate;
+                const channels = buffer.numberOfChannels;
+                const length = Math.floor(buffer.length * tempoRatio);
+                
+                const newBuffer = this.audioContext.createBuffer(channels, length, sampleRate);
+                
+                for (let channel = 0; channel < channels; channel++) {
+                    const inputData = buffer.getChannelData(channel);
+                    const outputData = newBuffer.getChannelData(channel);
+                    
+                    // 使用相位聲碼器算法進行移調
+                    const frameSize = 2048;
+                    const hopSize = frameSize / 4;
+                    const overlap = frameSize - hopSize;
+                    
+                    const window = this.createHannWindow(frameSize);
+                    const phase = new Float32Array(frameSize);
+                    const lastPhase = new Float32Array(frameSize);
+                    const sumPhase = new Float32Array(frameSize);
+                    
+                    for (let i = 0; i < length; i += hopSize) {
+                        const inputFrame = new Float32Array(frameSize);
+                        const outputFrame = new Float32Array(frameSize);
+                        
+                        // 讀取輸入幀
+                        for (let j = 0; j < frameSize; j++) {
+                            const index = Math.floor(i / tempoRatio) + j - frameSize / 2;
+                            inputFrame[j] = (index >= 0 && index < buffer.length) ? inputData[index] : 0;
+                        }
+                        
+                        // 應用窗函數
+                        for (let j = 0; j < frameSize; j++) {
+                            inputFrame[j] *= window[j];
+                        }
+                        
+                        // FFT (簡化版本)
+                        const fft = this.fft(inputFrame);
+                        
+                        // 相位處理
+                        for (let j = 0; j < frameSize / 2; j++) {
+                            const magnitude = Math.sqrt(fft.real[j] * fft.real[j] + fft.imag[j] * fft.imag[j]);
+                            const phaseDiff = Math.atan2(fft.imag[j], fft.real[j]) - lastPhase[j];
+                            lastPhase[j] = Math.atan2(fft.imag[j], fft.real[j]);
+                            
+                            // 相位展開
+                            let unwrappedPhase = phaseDiff;
+                            while (unwrappedPhase > Math.PI) unwrappedPhase -= 2 * Math.PI;
+                            while (unwrappedPhase < -Math.PI) unwrappedPhase += 2 * Math.PI;
+                            
+                            // 頻率調整
+                            const expectedPhase = 2 * Math.PI * j * hopSize / frameSize;
+                            const phaseError = unwrappedPhase - expectedPhase;
+                            const correctedPhase = expectedPhase + phaseError * frequencyRatio;
+                            
+                            sumPhase[j] += correctedPhase;
+                            
+                            // 重建複數
+                            fft.real[j] = magnitude * Math.cos(sumPhase[j]);
+                            fft.imag[j] = magnitude * Math.sin(sumPhase[j]);
+                            
+                            // 對稱性
+                            if (j > 0 && j < frameSize / 2) {
+                                fft.real[frameSize - j] = fft.real[j];
+                                fft.imag[frameSize - j] = -fft.imag[j];
+                            }
+                        }
+                        
+                        // 逆FFT
+                        const ifft = this.ifft(fft);
+                        
+                        // 應用窗函數並重疊相加
+                        for (let j = 0; j < frameSize; j++) {
+                            const outputIndex = i + j - frameSize / 2;
+                            if (outputIndex >= 0 && outputIndex < length) {
+                                outputData[outputIndex] += ifft[j] * window[j];
+                            }
+                        }
+                    }
+                    
+                    // 正規化
+                    const maxValue = Math.max(...outputData.map(Math.abs));
+                    if (maxValue > 0) {
+                        for (let i = 0; i < length; i++) {
+                            outputData[i] /= maxValue * 0.8;
+                        }
+                    }
+                }
+                
+                return newBuffer;
+            }
+
+            createHannWindow(size) {
+                const window = new Float32Array(size);
+                for (let i = 0; i < size; i++) {
+                    window[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / (size - 1)));
+                }
+                return window;
+            }
+
+            fft(input) {
+                const N = input.length;
+                const real = new Float32Array(N);
+                const imag = new Float32Array(N);
+                
+                // 複製輸入
+                for (let i = 0; i < N; i++) {
+                    real[i] = input[i];
+                }
+                
+                // 簡化的FFT實現
+                this.fftRecursive(real, imag, N);
+                
+                return { real, imag };
+            }
+
+            fftRecursive(real, imag, N) {
+                if (N <= 1) return;
+                
+                const evenReal = new Float32Array(N / 2);
+                const evenImag = new Float32Array(N / 2);
+                const oddReal = new Float32Array(N / 2);
+                const oddImag = new Float32Array(N / 2);
+                
+                for (let i = 0; i < N / 2; i++) {
+                    evenReal[i] = real[2 * i];
+                    evenImag[i] = imag[2 * i];
+                    oddReal[i] = real[2 * i + 1];
+                    oddImag[i] = imag[2 * i + 1];
+                }
+                
+                this.fftRecursive(evenReal, evenImag, N / 2);
+                this.fftRecursive(oddReal, oddImag, N / 2);
+                
+                for (let i = 0; i < N / 2; i++) {
+                    const angle = -2 * Math.PI * i / N;
+                    const cos = Math.cos(angle);
+                    const sin = Math.sin(angle);
+                    
+                    const tempReal = cos * oddReal[i] - sin * oddImag[i];
+                    const tempImag = cos * oddImag[i] + sin * oddReal[i];
+                    
+                    real[i] = evenReal[i] + tempReal;
+                    imag[i] = evenImag[i] + tempImag;
+                    real[i + N / 2] = evenReal[i] - tempReal;
+                    imag[i + N / 2] = evenImag[i] - tempImag;
+                }
+            }
+
+            ifft(fft) {
+                const N = fft.real.length;
+                const output = new Float32Array(N);
+                
+                // 簡化的逆FFT
+                for (let i = 0; i < N; i++) {
+                    output[i] = fft.real[i] / N;
+                }
+                
+                return output;
+            }
+
+            bufferToWav(buffer) {
+                const length = buffer.length;
+                const sampleRate = buffer.sampleRate;
+                const channels = buffer.numberOfChannels;
+                const arrayBuffer = new ArrayBuffer(44 + length * channels * 2);
+                const view = new DataView(arrayBuffer);
+                
+                const writeString = (offset, string) => {
+                    for (let i = 0; i < string.length; i++) {
+                        view.setUint8(offset + i, string.charCodeAt(i));
+                    }
+                };
+                
+                writeString(0, 'RIFF');
+                view.setUint32(4, 36 + length * channels * 2, true);
+                writeString(8, 'WAVE');
+                writeString(12, 'fmt ');
+                view.setUint32(16, 16, true);
+                view.setUint16(20, 1, true);
+                view.setUint16(22, channels, true);
+                view.setUint32(24, sampleRate, true);
+                view.setUint32(28, sampleRate * channels * 2, true);
+                view.setUint16(32, channels * 2, true);
+                view.setUint16(34, 16, true);
+                writeString(36, 'data');
+                view.setUint32(40, length * channels * 2, true);
+                
+                let offset = 44;
+                for (let i = 0; i < length; i++) {
+                    for (let channel = 0; channel < channels; channel++) {
+                        const sample = Math.max(-1, Math.min(1, buffer.getChannelData(channel)[i]));
+                        view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+                        offset += 2;
+                    }
+                }
+                
+                return arrayBuffer;
+            }
+
+            downloadProcessed() {
+                if (!this.processedBuffer) {
+                    this.showStatus('請先處理音檔', 'error');
+                    return;
+                }
+                
+                const audioData = this.bufferToWav(this.processedBuffer);
+                const blob = new Blob([audioData], { type: 'audio/wav' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'pitch_shifted_audio.wav';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                this.showStatus('下載完成！', 'success');
+            }
+
+            showStatus(message, type) {
+                this.status.innerHTML = `<div class="status ${type}">${message}</div>`;
+            }
+
+            reset() {
+                this.fileInput.value = '';
+                this.semitonesInput.value = 0;
+                this.semitonesSlider.value = 0;
+                this.centsInput.value = 0;
+                this.centsSlider.value = 0;
+                this.tempoInput.value = 100;
+                this.tempoSlider.value = 100;
+                this.controlsSection.style.display = 'none';
+                this.audioPlayer.style.display = 'none';
+                this.status.innerHTML = '';
+                this.originalBuffer = null;
+                this.processedBuffer = null;
+                
+                document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+                this.updateDisplay();
+            }
+        }
+
+        // 初始化應用
+        const pitchShifter = new PitchShifter();
+    </script>
+</body>
+</html>
